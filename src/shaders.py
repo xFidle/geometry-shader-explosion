@@ -1,7 +1,5 @@
 from OpenGL.GL import *
 
-from util import load_file
-
 
 class Shader:
     def __init__(self, vertex_path, geometry_path, fragment_path):
@@ -9,7 +7,11 @@ class Shader:
         geometry = self._complie_shader(geometry_path, GL_GEOMETRY_SHADER)
         fragment = self._complie_shader(fragment_path, GL_FRAGMENT_SHADER)
 
-        self.program = self._create_shader_program(vertex, geometry, fragment)
+        self._program = self._create_shader_program(vertex, geometry, fragment)
+
+    @property
+    def program(self):
+        return self._program
 
     def _complie_shader(self, path, shader_type):
         file_content = load_file(path)

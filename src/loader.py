@@ -6,23 +6,23 @@ from pyglm import glm
 
 class ObjectLoader:
     def __init__(self, filepath, format) -> None:
-        self.scene = self._load_obj(filepath)
-        self.format = self._parse_format(format)
-        self.floats_per_vertex = sum(n_floats for _, n_floats, _ in self.format)
-        self.vao, self.vbo, self.materials = self._create_buffers()
+        self._scene = self._load_obj(filepath)
+        self._format = self._parse_format(format)
+        self._floats_per_vertex = sum(n_floats for _, n_floats, _ in self._format)
+        self._vao, self._vbo, self._materials = self._create_buffers()
 
     def render(self):
-        if self.vao is None or self.vbo is None:
+        if self._vao is None or self._vbo is None:
             raise RuntimeError("object was already deleted")
 
-        glBindVertexArray(self.vao)
-        for material in self.materials:
+        glBindVertexArray(self._vao)
+        for material in self._materials:
             start, count = material.vbo_range
             glDrawArrays(GL_TRIANGLES, start, count)
         glBindVertexArray(0)
 
     def upload_uniforms(self, program):
-        for material in self.materials:
+        for material in self._materials:
             ambient_loc = glGetUniformLocation(program, "material_ambient")
             diffuse_loc = glGetUniformLocation(program, "material_diffuse")
             specular_loc = glGetUniformLocation(program, "material_specular")
@@ -34,14 +34,14 @@ class ObjectLoader:
             glUniform1f(shininess_loc, material.shininess)
 
     def close(self):
-        if self.vbo is not None:
-            glDeleteBuffers(1, [self.vbo])
+        if self._vbo is not None:
+            glDeleteBuffers(1, [self._vbo])
 
-        if self.vao is not None:
-            glDeleteVertexArrays(1, [self.vao])
+        if self._vao is not None:
+            glDeleteVertexArrays(1, [self._vao])
 
-        self.vao = None
-        self.vbo = None
+        self._vao = None
+        self._vbo = None
 
     class Material:
         def __init__(self, name, ambient, diffuse, specular, shininess, vbo_range):
@@ -74,10 +74,10 @@ class ObjectLoader:
         materials = []
         current_offset = 0
 
-        for name, material in self.scene.materials.items():
+        for name, material in self._scene.materials.items():
             vertices = np.array(material.vertices, dtype=np.float32)
             all_vertices.append(vertices)
-            vertex_count = len(vertices) // (self.floats_per_vertex)
+            vertex_count = len(vertices) // (self._floats_per_vertex)
 
             materials.append(
                 self.Material(
@@ -101,9 +101,9 @@ class ObjectLoader:
         glBindBuffer(GL_ARRAY_BUFFER, vbo)
         glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
 
-        stride = 4 * (self.floats_per_vertex)
+        stride = 4 * (self._floats_per_vertex)
 
-        for part in self.format:
+        for part in self._format:
             matches = {"V": 0, "N": 1, "T": 2}
             name, n_floats, offset = part
             glVertexAttribPointer(
