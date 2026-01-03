@@ -26,7 +26,7 @@ class Window:
         self.clock = pygame.time.Clock()
         self.time = 0
 
-    def initialize(self):
+    def _initialize(self):
         self.shader = Shader(
             cfg.VERT_SHADER,
             cfg.GEOM_SHADER,
@@ -45,7 +45,7 @@ class Window:
         glEnable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
 
-    def update(self):
+    def _update(self):
         glClearColor(0.25, 0.25, 0.25, 1.0)
         glClear(GL_COLOR_BUFFER_BIT)
         glClear(GL_DEPTH_BUFFER_BIT)
@@ -60,7 +60,7 @@ class Window:
         self.scene.close()
 
     def run(self):
-        self.initialize()
+        self._initialize()
 
         while self.running:
             for event in pygame.event.get():
