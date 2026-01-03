@@ -42,7 +42,6 @@ class Window:
         self._scene = ObjectLoader(cfg.SCENE, cfg.SCENE_FORMAT)
 
         glEnable(GL_DEPTH_TEST)
-        glDisable(GL_CULL_FACE)
 
     def _update(self):
         glClearColor(0.25, 0.25, 0.25, 1.0)
@@ -51,8 +50,7 @@ class Window:
         glUseProgram(self._shader.program)
 
         self._camera.upload_uniforms(self._shader.program)
-        self._scene.upload_uniforms(self._shader.program)
-        self._scene.render()
+        self._scene.render(self._shader.program)
 
     def cleanup(self):
         glDeleteProgram(self._shader.program)

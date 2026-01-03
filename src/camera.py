@@ -38,7 +38,7 @@ class Camera:
         glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm.value_ptr(identity))
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm.value_ptr(view))
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm.value_ptr(proj))
-        glUniform3fv(camera_loc, 1, GL_FALSE, glm.value_ptr(self.position))
+        glUniform3fv(camera_loc, 1, glm.value_ptr(self.position))
 
     def orbit(self, radius, time):
         _, _, cam_z = self.position

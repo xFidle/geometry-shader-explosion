@@ -11,27 +11,16 @@ class ObjectLoader:
         self._floats_per_vertex = sum(n_floats for _, n_floats, _ in self._format)
         self._vao, self._vbo, self._materials = self._create_buffers()
 
-    def render(self):
+    def render(self, program):
         if self._vao is None or self._vbo is None:
             raise RuntimeError("object was already deleted")
 
         glBindVertexArray(self._vao)
         for material in self._materials:
             start, count = material.vbo_range
+            self._upload_uniforms(program, material)
             glDrawArrays(GL_TRIANGLES, start, count)
         glBindVertexArray(0)
-
-    def upload_uniforms(self, program):
-        for material in self._materials:
-            ambient_loc = glGetUniformLocation(program, "material_ambient")
-            diffuse_loc = glGetUniformLocation(program, "material_diffuse")
-            specular_loc = glGetUniformLocation(program, "material_specular")
-            shininess_loc = glGetUniformLocation(program, "material_shininess")
-
-            glUniform3fv(ambient_loc, 1, glm.value_ptr(material.ambient))
-            glUniform3fv(diffuse_loc, 1, glm.value_ptr(material.diffuse))
-            glUniform3fv(specular_loc, 1, glm.value_ptr(material.specular))
-            glUniform1f(shininess_loc, material.shininess)
 
     def close(self):
         if self._vbo is not None:
@@ -103,8 +92,8 @@ class ObjectLoader:
 
         stride = 4 * (self._floats_per_vertex)
 
+        matches = {"V": 0, "N": 1, "T": 2}
         for part in self._format:
-            matches = {"V": 0, "N": 1, "T": 2}
             name, n_floats, offset = part
             glVertexAttribPointer(
                 matches[name],
@@ -119,3 +108,14 @@ class ObjectLoader:
         glBindVertexArray(0)
 
         return vao, vbo, materials
+
+    def _upload_uniforms(self, program, material):
+        ambient_loc = glGetUniformLocation(program, "material.ambient")
+        diffuse_loc = glGetUniformLocation(program, "material.diffuse")
+        specular_loc = glGetUniformLocation(program, "material.specular")
+        shininess_loc = glGetUniformLocation(program, "material.shininess")
+
+        glUniform3fv(ambient_loc, 1, glm.value_ptr(material.ambient))
+        glUniform3fv(diffuse_loc, 1, glm.value_ptr(material.diffuse))
+        glUniform3fv(specular_loc, 1, glm.value_ptr(material.specular))
+        glUniform1f(shininess_loc, material.shininess)

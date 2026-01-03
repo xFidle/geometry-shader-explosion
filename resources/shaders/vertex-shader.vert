@@ -8,15 +8,17 @@ uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
 uniform mat4 model_matrix;
 
-out vec3 v_position;
-out vec3 v_normal;
+out vertex_data {
+   vec3 position;
+   vec3 normal;
+} vertex;
 
 void main()
 {
     vec4 worldPos = model_matrix * vec4(in_position, 1.0);
 
-    v_position = worldPos.xyz;
-    v_normal = mat3(model_matrix) * in_normal;
+    vertex.position = worldPos.xyz;
+    vertex.normal = mat3(transpose(inverse(model_matrix))) * in_normal;
 
     gl_Position = projection_matrix * view_matrix * worldPos;
 }
