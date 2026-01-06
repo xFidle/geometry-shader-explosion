@@ -3,11 +3,13 @@ name = "geometry-shader-explosion"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
+    "imgui[full]>=2.0.0",
     "numpy>=2.4.0",
     "pygame>=2.6.1",
     "pyglm>=2.8.3",
+    "pyimgui-stubs>=0.0.2",
     "pyopengl>=3.1.10",
     "pyopengl-accelerate>=3.1.10",
     "pywavefront>=1.3.3",
@@ -18,3 +20,4 @@ typeCheckingMode = "basic"
 
 [tool.ruff.lint]
 select = ["I"]
+
