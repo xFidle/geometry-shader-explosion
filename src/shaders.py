@@ -1,3 +1,4 @@
+import math
 from OpenGL.GL import *
 
 
@@ -14,6 +15,9 @@ class Shader:
         return self._program
 
     def _complie_shader(self, path, shader_type):
+        if path is None:
+            return None
+
         file_content = load_file(path)
         shader = glCreateShader(shader_type)
         glShaderSource(shader, file_content)
@@ -28,7 +32,8 @@ class Shader:
     def _create_shader_program(self, vertex, geometry, fragment):
         program = glCreateProgram()
         glAttachShader(program, vertex)
-        glAttachShader(program, geometry)
+        if geometry is not None:
+            glAttachShader(program, geometry)
         glAttachShader(program, fragment)
 
         glLinkProgram(program)
@@ -38,7 +43,8 @@ class Shader:
             raise RuntimeError(f"Program linking failed: {error}")
 
         glDeleteShader(vertex)
-        glDeleteShader(geometry)
+        if geometry is not None:
+            glDeleteShader(geometry)
         glDeleteShader(fragment)
 
         return program

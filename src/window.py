@@ -1,3 +1,4 @@
+import random
 import sys
 
 import imgui
@@ -7,6 +8,7 @@ import pygame
 from OpenGL.GL import *
 from pygame.event import Event
 from pyglm import glm
+import math
 
 import config as cfg
 from camera import Camera
@@ -34,9 +36,18 @@ class Window:
         self._explosion_origin = [0, 0, 0]
         self._falloff_strength = 3.0
         self._falloff_radius = 1.0
-        self._random_stregth = 0.01
-        self._impulse_decay = .20
-        self._gravity_power = .25
+        self._random_strength = 0.01
+        self._impulse_decay = 0.20
+        self._gravity_power = 0.25
+        self._seed = random.random() * 100
+
+        self._new_magnitude = 2
+        self._new_explosion_origin = [0, 0, 0]
+        self._new_falloff_strength = 3.0
+        self._new_falloff_radius = 1.0
+        self._new_random_strength = 0.01
+        self._new_impulse_decay = 0.20
+        self._new_gravity_power = 0.25
 
         self._init_ui()
 
@@ -46,11 +57,21 @@ class Window:
         imgui.get_io().fonts.get_tex_data_as_rgba32()
         self._ui_renderer = imgui.integrations.pygame.PygameRenderer()
 
+    def _reset_simulation(self):
+        self._time = 0
+        self._magnitude = self._new_magnitude
+        self._explosion_origin = self._new_explosion_origin
+        self._falloff_strength = self._new_falloff_strength
+        self._falloff_radius = self._new_falloff_radius
+        self._random_strength = self._new_random_strength
+        self._impulse_decay = self._new_impulse_decay
+        self._gravity_power = self._new_gravity_power
+
     def _render_ui(self):
         glUseProgram(0)
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
-        # glDisable(GL_CULL_FACE)
+        glEnable(GL_CULL_FACE)
         # glDisable(GL_DEPTH_TEST)
 
         imgui.new_frame()
@@ -64,11 +85,43 @@ class Window:
             if imgui.button("Stop"):
                 self._stopped = True
 
-        if imgui.button("Reset"):
-            self._time = 0
-
         _, self._time_mult = imgui.input_double(
             "Time multipler", self._time_mult, 0.1, format="%.3f"
+        )
+
+        if imgui.button("Reset"):
+            self._reset_simulation()
+
+        imgui.same_line()
+
+        if imgui.button("Reset & reseed"):
+            self._seed = random.random() * 100
+            self._reset_simulation()
+
+        imgui.text("Settings below take effect after reset")
+
+        _, self._new_explosion_origin = imgui.input_float3(
+            "Explosion origin",
+            *self._new_explosion_origin,
+            format="%.3f",
+        )
+        _, self._new_magnitude = imgui.input_double(
+            "Magnitude", self._new_magnitude, 0.1, format="%.3f"
+        )
+        _, self._new_falloff_strength = imgui.input_double(
+            "Falloff strength", self._new_falloff_strength, 0.1, format="%.3f"
+        )
+        _, self._new_falloff_radius = imgui.input_double(
+            "Falloff radius", self._new_falloff_radius, 0.1, format="%.3f"
+        )
+        _, self._new_random_strength = imgui.input_double(
+            "Random strength", self._new_random_strength, 0.1, format="%.3f"
+        )
+        _, self._new_impulse_decay = imgui.input_double(
+            "Impulse decay", self._new_impulse_decay, 0.1, format="%.3f"
+        )
+        _, self._new_gravity_power = imgui.input_double(
+            "Gravity power", self._new_gravity_power, 0.1, format="%.3f"
         )
 
         imgui.end()
@@ -120,12 +173,12 @@ class Window:
         self._scene = ObjectLoader(cfg.SCENE, cfg.SCENE_FORMAT)
 
         glEnable(GL_DEPTH_TEST)
-        glDisable(GL_CULL_FACE)
+        glEnable(GL_CULL_FACE)
         pygame.event.set_grab(True)
 
     def _update(self):
-        # glDisable(GL_CULL_FACE)
-        # glEnable(GL_DEPTH_TEST)
+        glDisable(GL_CULL_FACE)
+        glEnable(GL_DEPTH_TEST)
         # glFrontFace(GL_CCW)
 
         glClearColor(0.25, 0.25, 0.25, 1.0)
@@ -142,9 +195,10 @@ class Window:
         falloff_strength = glGetUniformLocation(
             self._shader.program, "falloff_strength"
         )
-        random_stregth = glGetUniformLocation(self._shader.program, "random_stregth")
+        random_strength = glGetUniformLocation(self._shader.program, "random_strength")
         impulse_decay = glGetUniformLocation(self._shader.program, "impulse_decay")
         gravity_power = glGetUniformLocation(self._shader.program, "gravity_power")
+        seed = glGetUniformLocation(self._shader.program, "seed")
 
         glUniform1f(time, self._time)
         glUniform1f(magnitude, self._magnitude)
@@ -156,9 +210,10 @@ class Window:
         )
         glUniform1f(falloff_radius, self._falloff_radius)
         glUniform1f(falloff_strength, self._falloff_strength)
-        glUniform1f(random_stregth, self._random_stregth)
+        glUniform1f(random_strength, self._random_strength)
         glUniform1f(impulse_decay, 1 - self._impulse_decay)
         glUniform1f(gravity_power, self._gravity_power)
+        glUniform1f(seed, self._seed)
 
         self._camera.upload_uniforms(self._shader.program)
         self._scene.render(self._shader.program)

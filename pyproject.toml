@@ -5,7 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "imgui[full]>=2.0.0",
+    "imgui[pygame]>=2.0.0",
     "numpy>=2.4.0",
     "pygame>=2.6.1",
     "pyglm>=2.8.3",

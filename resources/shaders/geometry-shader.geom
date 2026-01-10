@@ -19,12 +19,23 @@ uniform vec3 explosion_origin;
 uniform float falloff_radius;
 uniform float falloff_strength;
 uniform float impulse_decay;
-uniform float random_stregth;
+uniform float random_strength;
 uniform float gravity_power;
+uniform float seed;
 
 uniform mat4 projection_matrix;
 uniform mat4 view_matrix;
 uniform mat4 model_matrix;
+
+highp float rand(vec2 co)
+{
+    highp float a = 12.9898;
+    highp float b = 78.233;
+    highp float c = 43758.5453;
+    highp float dt= dot(co.xy ,vec2(a,b));
+    highp float sn= mod(dt,3.14);
+    return fract(sin(sn) * c);
+}
 
 float falloff(float len) {
     return pow(clamp(1.0 - len / falloff_radius, 0.0, 1.0), falloff_strength);
@@ -35,8 +46,14 @@ float impulse() {
 }
 
 vec3 randomise_vec(vec3 direction) {
-    vec3 rand_dir = noise3(vertex[0].position);
-    return normalize(direction + rand_dir * random_stregth);
+    vec3 rand_dir = normalize(vec3(
+      rand(vertex[0].position.xy * seed), 
+      rand(vertex[1].position.yz * seed), 
+      rand(vertex[2].position.zx * seed)
+    ));
+    if (isnan(rand_dir) != bvec3(false, false, false))
+      return vec3(0);
+    return normalize(direction + rand_dir * random_strength);
 
 }
 
@@ -61,7 +78,7 @@ vec3 explode(vec3 pos) {
     float dist = length(dir);
     dir = normalize(dir);
 
-    return pos + randomise_vec(dir) * impulse() + gravity();
+    return pos + randomise_vec(dir) * impulse() * falloff(dist) + gravity();
 }
 
 void main() {
