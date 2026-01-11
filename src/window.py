@@ -31,7 +31,7 @@ class Window:
         self._time_mult = 1.0
         self._magnitude = 2
         self._stopped = False
-        self._explosion_origin = [1, 0, 1]
+        self._explosion_origin = [0, 1.5, 0]
         self._falloff_strength = 3.0
         self._falloff_radius = 1.0
         self._random_strength = 0.01
@@ -40,7 +40,7 @@ class Window:
         self._seed = random.random() * 100
 
         self._new_magnitude = 2
-        self._new_explosion_origin = [1, 0, 1]
+        self._new_explosion_origin = [0, 1.5, 0]
         self._new_falloff_strength = 3.0
         self._new_falloff_radius = 1.0
         self._new_random_strength = 0.01
@@ -178,9 +178,7 @@ class Window:
         self._car_model_matrix = glm.mat4(1.0)
 
         self._indicator = ObjectLoader(cfg.INDICATOR, cfg.INDICATOR_FORMAT)
-        self._indicator_model_matrix = glm.translate(
-            glm.mat4(1.0), glm.vec3(1.0, 0.0, 0.0)
-        )
+        self._indicator_model_matrix = glm.translate(glm.mat4(1.0), glm.vec3(0, 1.5, 0))
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
