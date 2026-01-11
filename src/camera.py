@@ -2,7 +2,9 @@ import math
 
 import glm
 from OpenGL.GL import *
+
 import config as cfg
+
 
 class Camera:
     def __init__(
@@ -35,11 +37,8 @@ class Camera:
 
         proj_loc = glGetUniformLocation(program, "projection_matrix")
         view_loc = glGetUniformLocation(program, "view_matrix")
-        model_loc = glGetUniformLocation(program, "model_matrix")
         camera_loc = glGetUniformLocation(program, "camera_position")
 
-        identity = glm.mat4(1.0)
-        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm.value_ptr(identity))
         glUniformMatrix4fv(view_loc, 1, GL_FALSE, glm.value_ptr(view))
         glUniformMatrix4fv(proj_loc, 1, GL_FALSE, glm.value_ptr(proj))
         glUniform3fv(camera_loc, 1, glm.value_ptr(self._position))

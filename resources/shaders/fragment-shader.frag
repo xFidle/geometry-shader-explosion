@@ -25,11 +25,11 @@ struct Light {
 };
 
 Light light = Light(
-    camera_position,
-    vec3(0.2, 0.2, 0.2),
-    vec3(1.0, 1.0, 1.0),
-    vec3(0.2, 0.2, 0.2)
-);
+        camera_position,
+        vec3(0.2, 0.2, 0.2),
+        vec3(1.0, 1.0, 1.0),
+        vec3(0.2, 0.2, 0.2)
+    );
 
 void main()
 {

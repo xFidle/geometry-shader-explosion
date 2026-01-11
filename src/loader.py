@@ -11,9 +11,12 @@ class ObjectLoader:
         self._floats_per_vertex = sum(n_floats for _, n_floats, _ in self._format)
         self._vao, self._vbo, self._materials = self._create_buffers()
 
-    def render(self, program):
+    def render(self, program, model):
         if self._vao is None or self._vbo is None:
             raise RuntimeError("object was already deleted")
+
+        model_loc = glGetUniformLocation(program, "model_matrix")
+        glUniformMatrix4fv(model_loc, 1, GL_FALSE, glm.value_ptr(model))
 
         glBindVertexArray(self._vao)
         for material in self._materials:

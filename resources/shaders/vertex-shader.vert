@@ -15,10 +15,10 @@ out vertex_data {
 
 void main()
 {
-    vec4 worldPos = model_matrix * vec4(in_position, 1.0);
+   vec4 worldPos = model_matrix * vec4(in_position, 1.0);
 
-    vertex.position = worldPos.xyz;
-    vertex.normal = mat3(transpose(inverse(model_matrix))) * in_normal;
+   vertex.position = worldPos.xyz;
+   vertex.normal = mat3(transpose(inverse(model_matrix))) * in_normal;
 
-    gl_Position = projection_matrix * view_matrix * worldPos;
+   gl_Position = projection_matrix * view_matrix * worldPos;
 }

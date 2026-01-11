@@ -13,6 +13,8 @@ out frag_data {
     vec3 normal;
 } frag;
 
+uniform int should_explode;
+
 uniform float magnitude;
 uniform float time;
 uniform vec3 explosion_origin;
@@ -32,8 +34,8 @@ highp float rand(vec2 co)
     highp float a = 12.9898;
     highp float b = 78.233;
     highp float c = 43758.5453;
-    highp float dt= dot(co.xy ,vec2(a,b));
-    highp float sn= mod(dt,3.14);
+    highp float dt = dot(co.xy, vec2(a, b));
+    highp float sn = mod(dt, 3.14);
     return fract(sin(sn) * c);
 }
 
@@ -47,14 +49,13 @@ float impulse() {
 
 vec3 randomise_vec(vec3 direction) {
     vec3 rand_dir = normalize(vec3(
-      rand(vertex[0].position.xy * seed), 
-      rand(vertex[1].position.yz * seed), 
-      rand(vertex[2].position.zx * seed)
-    ));
+                rand(vertex[0].position.xy * seed),
+                rand(vertex[1].position.yz * seed),
+                rand(vertex[2].position.zx * seed)
+            ));
     if (isnan(rand_dir) != bvec3(false, false, false))
-      return vec3(0);
+        return vec3(0);
     return normalize(direction + rand_dir * random_strength);
-
 }
 
 vec3 surface_normal() {
@@ -65,7 +66,7 @@ vec3 surface_normal() {
 
 vec3 surface_center() {
     return (
-        vertex[0].position + vertex[1].position + vertex[2].position
+    vertex[0].position + vertex[1].position + vertex[2].position
     ) / 3;
 }
 
@@ -83,9 +84,17 @@ vec3 explode(vec3 pos) {
 
 void main() {
     for (int i = 0; i < 3; i++) {
-        vec3 exploded = explode(vertex[i].position);
-        gl_Position = projection_matrix * view_matrix * model_matrix * vec4(exploded,1.0);
-        frag.position = exploded;
+        vec3 pos;
+        vec3 normal;
+        if (should_explode == 1) {
+            pos = explode(vertex[i].position);
+            normal = surface_normal();
+        } else {
+            pos = vertex[i].position;
+            normal = vertex[i].normal;
+        }
+        gl_Position = projection_matrix * view_matrix * model_matrix * vec4(pos, 1.0);
+        frag.position = pos;
         frag.normal = surface_normal();
         EmitVertex();
     }

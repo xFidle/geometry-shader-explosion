@@ -2,13 +2,11 @@ import random
 import sys
 
 import imgui
-import imgui.integrations.opengl
 import imgui.integrations.pygame
 import pygame
 from OpenGL.GL import *
 from pygame.event import Event
 from pyglm import glm
-import math
 
 import config as cfg
 from camera import Camera
@@ -33,7 +31,7 @@ class Window:
         self._time_mult = 1.0
         self._magnitude = 2
         self._stopped = False
-        self._explosion_origin = [0, 0, 0]
+        self._explosion_origin = [1, 0, 1]
         self._falloff_strength = 3.0
         self._falloff_radius = 1.0
         self._random_strength = 0.01
@@ -42,7 +40,7 @@ class Window:
         self._seed = random.random() * 100
 
         self._new_magnitude = 2
-        self._new_explosion_origin = [0, 0, 0]
+        self._new_explosion_origin = [1, 0, 1]
         self._new_falloff_strength = 3.0
         self._new_falloff_radius = 1.0
         self._new_random_strength = 0.01
@@ -60,19 +58,24 @@ class Window:
     def _reset_simulation(self):
         self._time = 0
         self._magnitude = self._new_magnitude
-        self._explosion_origin = self._new_explosion_origin
         self._falloff_strength = self._new_falloff_strength
         self._falloff_radius = self._new_falloff_radius
         self._random_strength = self._new_random_strength
         self._impulse_decay = self._new_impulse_decay
         self._gravity_power = self._new_gravity_power
 
+        self._indicator_model_matrix = glm.translate(
+            self._indicator_model_matrix,
+            glm.vec3(self._new_explosion_origin) - glm.vec3(self._explosion_origin),
+        )
+
+        self._explosion_origin = self._new_explosion_origin
+
     def _render_ui(self):
         glUseProgram(0)
         glBindVertexArray(0)
         glBindBuffer(GL_ARRAY_BUFFER, 0)
         glEnable(GL_CULL_FACE)
-        # glDisable(GL_DEPTH_TEST)
 
         imgui.new_frame()
 
@@ -154,7 +157,8 @@ class Window:
 
     def cleanup(self):
         glDeleteProgram(self._shader.program)
-        self._scene.close()
+        self._car.close()
+        self._indicator.close()
 
     def _initialize(self):
         self._shader = Shader(
@@ -170,22 +174,25 @@ class Window:
             aspect_ratio=cfg.WINDOW_SIZE[0] / cfg.WINDOW_SIZE[1],
         )
 
-        self._scene = ObjectLoader(cfg.SCENE, cfg.SCENE_FORMAT)
+        self._car = ObjectLoader(cfg.CAR, cfg.CAR_FORMAT)
+        self._car_model_matrix = glm.mat4(1.0)
+
+        self._indicator = ObjectLoader(cfg.INDICATOR, cfg.INDICATOR_FORMAT)
+        self._indicator_model_matrix = glm.translate(
+            glm.mat4(1.0), glm.vec3(1.0, 0.0, 0.0)
+        )
 
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
         pygame.event.set_grab(True)
 
     def _update(self):
-        glDisable(GL_CULL_FACE)
-        glEnable(GL_DEPTH_TEST)
-        # glFrontFace(GL_CCW)
-
         glClearColor(0.25, 0.25, 0.25, 1.0)
         glClear(GL_COLOR_BUFFER_BIT)
         glClear(GL_DEPTH_BUFFER_BIT)
         glUseProgram(self._shader.program)
 
+        should_explode = glGetUniformLocation(self._shader.program, "should_explode")
         time = glGetUniformLocation(self._shader.program, "time")
         magnitude = glGetUniformLocation(self._shader.program, "magnitude")
         explosion_origin = glGetUniformLocation(
@@ -216,7 +223,12 @@ class Window:
         glUniform1f(seed, self._seed)
 
         self._camera.upload_uniforms(self._shader.program)
-        self._scene.render(self._shader.program)
+
+        glUniform1i(should_explode, 1)
+        self._car.render(self._shader.program, self._car_model_matrix)
+
+        glUniform1i(should_explode, 0)
+        self._indicator.render(self._shader.program, self._indicator_model_matrix)
 
     def _handle_input(self, events: list[Event], mouse_rel: tuple[int, int]):
         for event in events:
