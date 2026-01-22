@@ -12,6 +12,8 @@ import config as cfg
 from camera import Camera
 from loader import ObjectLoader
 from shaders import Shader
+import tkinter as tk
+from tkinter import filedialog
 
 
 class Window:
@@ -46,6 +48,7 @@ class Window:
         self._new_random_strength = 0.01
         self._new_impulse_decay = 0.20
         self._new_gravity_power = 0.25
+        self._new_model_path = cfg.CAR
 
         self._init_ui()
 
@@ -70,6 +73,9 @@ class Window:
         )
 
         self._explosion_origin = self._new_explosion_origin
+
+        self._model = ObjectLoader(self._new_model_path, cfg.CAR_FORMAT)
+        self._model_matrx = glm.mat4(1.0)
 
     def _render_ui(self):
         glUseProgram(0)
@@ -102,6 +108,14 @@ class Window:
             self._reset_simulation()
 
         imgui.text("Settings below take effect after reset")
+
+        if imgui.button("Choose model"):
+            root = tk.Tk()
+            root.withdraw()
+            self._new_model_path = filedialog.askopenfilename()
+
+        imgui.same_line()
+        imgui.text(f"Path: {self._new_model_path}")
 
         _, self._new_explosion_origin = imgui.input_float3(
             "Explosion origin",
@@ -157,7 +171,7 @@ class Window:
 
     def cleanup(self):
         glDeleteProgram(self._shader.program)
-        self._car.close()
+        self._model.close()
         self._indicator.close()
 
     def _initialize(self):
@@ -174,8 +188,8 @@ class Window:
             aspect_ratio=cfg.WINDOW_SIZE[0] / cfg.WINDOW_SIZE[1],
         )
 
-        self._car = ObjectLoader(cfg.CAR, cfg.CAR_FORMAT)
-        self._car_model_matrix = glm.mat4(1.0)
+        self._model = ObjectLoader(cfg.CAR, cfg.CAR_FORMAT)
+        self._model_matrix = glm.mat4(1.0)
 
         self._indicator = ObjectLoader(cfg.INDICATOR, cfg.INDICATOR_FORMAT)
         self._indicator_model_matrix = glm.translate(glm.mat4(1.0), glm.vec3(0, 1.5, 0))
@@ -223,7 +237,7 @@ class Window:
         self._camera.upload_uniforms(self._shader.program)
 
         glUniform1i(should_explode, 1)
-        self._car.render(self._shader.program, self._car_model_matrix)
+        self._model.render(self._shader.program, self._model_matrix)
 
         glUniform1i(should_explode, 0)
         self._indicator.render(self._shader.program, self._indicator_model_matrix)

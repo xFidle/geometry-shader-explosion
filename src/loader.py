@@ -48,6 +48,7 @@ class ObjectLoader:
         scene = pywavefront.Wavefront(
             filepath, collect_faces=True, create_materials=True
         )
+        # scene: trimesh.Scene = trimesh.load(filepath, force="scene")
         return scene
 
     def _parse_format(self, format):
