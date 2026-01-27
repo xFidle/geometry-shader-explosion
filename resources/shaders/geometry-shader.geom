@@ -93,7 +93,7 @@ void main() {
             pos = vertex[i].position;
             normal = vertex[i].normal;
         }
-        gl_Position = projection_matrix * view_matrix * model_matrix * vec4(pos, 1.0);
+        gl_Position = projection_matrix * view_matrix * vec4(pos, 1.0);
         frag.position = pos;
         frag.normal = surface_normal();
         EmitVertex();

@@ -44,7 +44,7 @@ class Window:
         self._new_magnitude = 2
         self._new_explosion_origin = [0, 1.5, 0]
         self._new_falloff_strength = 3.0
-        self._new_falloff_radius = 1.0
+        self._new_falloff_radius = 5.0
         self._new_random_strength = 0.01
         self._new_impulse_decay = 0.20
         self._new_gravity_power = 0.25
@@ -157,7 +157,7 @@ class Window:
 
             self._delta_time = self._clock.get_time() / 1000
             if not self._stopped:
-                self._time += self._delta_time * self._time_mult
+                self._time = max(0, self._time + self._delta_time * self._time_mult)
 
             self._update()
             self._render_ui()
