@@ -1,0 +1,31 @@
+[window]
+title = "Geometry Shader Explosion"
+size = [1600, 1000]
+fps = 60
+
+[shaders]
+vertex = "resources/shaders/vertex-shader.vert"
+geometry = "resources/shaders/geometry-shader.geom"
+fragment = "resources/shaders/fragment-shader.frag"
+
+[models]
+car = "resources/models/car.obj"
+car_format = "N3F_V3F"
+indicator = "resources/models/bomb.obj"
+indicator_format = "T2F_N3F_V3F"
+
+[camera]
+position = [5.0, 5.0, 5.0]
+front = [-5.0, -5.0, -5.0]
+up = [0.0, 1.0, 0.0]
+
+[simulation]
+time_multiplier = 1.0
+magnitude = 2
+stopped = true
+explosion_origin = [0.0, 2.0, 0.0]
+falloff_strength = 3.0
+falloff_radius = 5.0
+random_strength = 0.01
+impulse_decay = 0.20
+gravity_power = 0.25

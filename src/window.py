@@ -1,5 +1,7 @@
 import random
 import sys
+import tkinter as tk
+from tkinter import filedialog
 
 import imgui
 import imgui.integrations.pygame
@@ -8,16 +10,16 @@ from OpenGL.GL import *
 from pygame.event import Event
 from pyglm import glm
 
-import config as cfg
 from camera import Camera
+from config import Config
 from loader import ObjectLoader
 from shaders import Shader
-import tkinter as tk
-from tkinter import filedialog
 
 
 class Window:
     def __init__(self):
+        self._config = Config.from_file()
+
         pygame.init()
         display_flags = pygame.DOUBLEBUF | pygame.OPENGL
         pygame.display.gl_set_attribute(pygame.GL_MULTISAMPLEBUFFERS, 1)
@@ -25,36 +27,94 @@ class Window:
         pygame.display.gl_set_attribute(
             pygame.GL_CONTEXT_PROFILE_MASK, pygame.GL_CONTEXT_PROFILE_CORE
         )
-        self._screen = pygame.display.set_mode(cfg.WINDOW_SIZE, display_flags)
-        pygame.display.set_caption(cfg.WINDOW_TITLE)
-        self._running = True
+        pygame.display.set_caption(self._config.window.title)
+        self._screen = pygame.display.set_mode(self._config.window.size, display_flags)
         self._clock = pygame.time.Clock()
+        self._running = True
         self._time = 0
-        self._time_mult = 1.0
-        self._magnitude = 2
-        self._stopped = False
-        self._explosion_origin = [0, 1.5, 0]
-        self._falloff_strength = 3.0
-        self._falloff_radius = 1.0
-        self._random_strength = 0.01
-        self._impulse_decay = 0.20
-        self._gravity_power = 0.25
         self._seed = random.random() * 100
+        self._stopped = self._config.simulation.stopped
 
-        self._new_magnitude = 2
-        self._new_explosion_origin = [0, 1.5, 0]
-        self._new_falloff_strength = 3.0
-        self._new_falloff_radius = 5.0
-        self._new_random_strength = 0.01
-        self._new_impulse_decay = 0.20
-        self._new_gravity_power = 0.25
-        self._new_model_path = cfg.CAR
+        self._initalize_shader()
+        self._initialize_camera()
+        self._initialize_simulation_params()
+        self._initalize_objects()
+        self._initialize_ui()
 
-        self._init_ui()
+    def run(self):
+        glEnable(GL_DEPTH_TEST)
+        glEnable(GL_CULL_FACE)
+        pygame.event.set_grab(True)
+        while self._running:
+            events = pygame.event.get()
+            mouse_rel = pygame.mouse.get_rel()
 
-    def _init_ui(self):
+            self._handle_input(events, mouse_rel)
+
+            self._delta_time = self._clock.get_time() / 1000
+            if not self._stopped:
+                self._time = max(0, self._time + self._delta_time * self._time_mult)
+
+            self._update()
+            self._render_ui()
+
+            pygame.display.flip()
+            self._clock.tick(self._config.window.fps)
+
+        self._cleanup()
+        pygame.quit()
+        sys.exit()
+
+    def _initalize_shader(self):
+        self._shader = Shader(
+            self._config.shaders.vertex,
+            self._config.shaders.geometry,
+            self._config.shaders.fragment,
+        )
+
+    def _initialize_camera(self):
+        self._camera = Camera(
+            position=glm.vec3(*self._config.camera.position),
+            front=glm.vec3(*self._config.camera.front),
+            up=glm.vec3(*self._config.camera.up),
+            aspect_ratio=self._config.window.size[0] / self._config.window.size[1],
+        )
+
+    def _initialize_simulation_params(self):
+        self._time_mult = self._config.simulation.time_multiplier
+        self._magnitude = self._config.simulation.magnitude
+        self._explosion_origin = self._config.simulation.explosion_origin.copy()
+        self._falloff_strength = self._config.simulation.falloff_strength
+        self._falloff_radius = self._config.simulation.falloff_radius
+        self._random_strength = self._config.simulation.random_strength
+        self._impulse_decay = self._config.simulation.impulse_decay
+        self._gravity_power = self._config.simulation.gravity_power
+
+        self._new_magnitude = self._config.simulation.magnitude
+        self._new_explosion_origin = self._config.simulation.explosion_origin.copy()
+        self._new_falloff_strength = self._config.simulation.falloff_strength
+        self._new_falloff_radius = self._config.simulation.falloff_radius
+        self._new_random_strength = self._config.simulation.random_strength
+        self._new_impulse_decay = self._config.simulation.impulse_decay
+        self._new_gravity_power = self._config.simulation.gravity_power
+        self._new_model_path = self._config.models.car
+
+    def _initalize_objects(self):
+        self._model = ObjectLoader(
+            self._config.models.car, self._config.models.car_format
+        )
+        self._model_matrix = glm.mat4(1.0)
+
+        self._indicator = ObjectLoader(
+            self._config.models.indicator, self._config.models.indicator_format
+        )
+        self._indicator_model_matrix = glm.translate(
+            glm.mat4(1.0), glm.vec3(*self._explosion_origin)
+        )
+
+    def _initialize_ui(self):
         imgui.create_context()
-        imgui.get_io().display_size = cfg.WINDOW_SIZE
+        imgui.get_io().display_size = self._config.window.size
         imgui.get_io().fonts.get_tex_data_as_rgba32()
         self._ui_renderer = imgui.integrations.pygame.PygameRenderer()
 
@@ -74,7 +134,7 @@ class Window:
 
         self._explosion_origin = self._new_explosion_origin
 
-        self._model = ObjectLoader(self._new_model_path, cfg.CAR_FORMAT)
+        self._model = ObjectLoader(self._new_model_path, self._config.models.car_format)
         self._model_matrx = glm.mat4(1.0)
 
     def _render_ui(self):
@@ -145,58 +205,6 @@ class Window:
 
         imgui.render()
         self._ui_renderer.render(imgui.get_draw_data())
-
-    def run(self):
-        self._initialize()
-
-        while self._running:
-            events = pygame.event.get()
-            mouse_rel = pygame.mouse.get_rel()
-
-            self._handle_input(events, mouse_rel)
-
-            self._delta_time = self._clock.get_time() / 1000
-            if not self._stopped:
-                self._time = max(0, self._time + self._delta_time * self._time_mult)
-
-            self._update()
-            self._render_ui()
-
-            pygame.display.flip()
-            self._clock.tick(cfg.FPS)
-
-        self.cleanup()
-        pygame.quit()
-        sys.exit()
-
-    def cleanup(self):
-        glDeleteProgram(self._shader.program)
-        self._model.close()
-        self._indicator.close()
-
-    def _initialize(self):
-        self._shader = Shader(
-            cfg.VERT_SHADER,
-            cfg.GEOM_SHADER,
-            cfg.FRAG_SHADER,
-        )
-
-        self._camera = Camera(
-            position=glm.vec3(*cfg.CAMERA_POSITION),
-            front=glm.vec3(*cfg.CAMERA_FRONT),
-            up=glm.vec3(*cfg.CAMERA_UP),
-            aspect_ratio=cfg.WINDOW_SIZE[0] / cfg.WINDOW_SIZE[1],
-        )
-
-        self._model = ObjectLoader(cfg.CAR, cfg.CAR_FORMAT)
-        self._model_matrix = glm.mat4(1.0)
-
-        self._indicator = ObjectLoader(cfg.INDICATOR, cfg.INDICATOR_FORMAT)
-        self._indicator_model_matrix = glm.translate(glm.mat4(1.0), glm.vec3(0, 1.5, 0))
-
-        glEnable(GL_DEPTH_TEST)
-        glEnable(GL_CULL_FACE)
-        pygame.event.set_grab(True)
 
     def _update(self):
         glClearColor(0.25, 0.25, 0.25, 1.0)
@@ -270,3 +278,8 @@ class Window:
             if mouse_buttons[0]:
                 dx, dy = mouse_rel
                 self._camera.mouse_callback(dx, dy)
+
+    def _cleanup(self):
+        glDeleteProgram(self._shader.program)
+        self._model.close()
+        self._indicator.close()

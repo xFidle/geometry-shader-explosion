@@ -3,8 +3,6 @@ import math
 import glm
 from OpenGL.GL import *
 
-import config as cfg
-
 
 class Camera:
     def __init__(
@@ -12,10 +10,10 @@ class Camera:
         position,
         front,
         up,
+        aspect_ratio,
         speed=2.0,
         sensitivity=0.1,
         fov=math.radians(45.0),
-        aspect_ratio=(cfg.WINDOW_SIZE[0] / cfg.WINDOW_SIZE[1]),
         near=0.01,
         far=100.0,
     ):
