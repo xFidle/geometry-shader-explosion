@@ -98,6 +98,7 @@ class Window:
         self._new_impulse_decay = self._config.simulation.impulse_decay
         self._new_gravity_power = self._config.simulation.gravity_power
         self._new_model_path = self._config.models.car
+        self._new_model_format = self._config.models.car_format
 
     def _initalize_objects(self):
         self._model = ObjectLoader(
@@ -134,7 +135,7 @@ class Window:
 
         self._explosion_origin = self._new_explosion_origin
 
-        self._model = ObjectLoader(self._new_model_path, self._config.models.car_format)
+        self._model = ObjectLoader(self._new_model_path, self._new_model_format)
         self._model_matrx = glm.mat4(1.0)
 
     def _render_ui(self):
@@ -176,6 +177,11 @@ class Window:
 
         imgui.same_line()
         imgui.text(f"Path: {self._new_model_path}")
+
+        imgui.same_line()
+        _, self._new_model_format = imgui.input_text(
+            "OBJ Format", self._new_model_format
+        )
 
         _, self._new_explosion_origin = imgui.input_float3(
             "Explosion origin",
