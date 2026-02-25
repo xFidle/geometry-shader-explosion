@@ -10,6 +10,14 @@ many effects that can be used to achieve the desired effect.
 ## Demo
 
 
+https://github.com/user-attachments/assets/163d9370-f4e0-4d6a-b3f7-fe8271b9ff24
+
+
+
+https://github.com/user-attachments/assets/9ce8d4ea-bfce-4a09-a341-b9ce9ffb912b
+
+
+
 ## Installation
 This project uses [`uv`](https://github.com/astral-sh/uv) - dependencies are pinned in *uv.lock*.
 
